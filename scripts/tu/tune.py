@@ -4,9 +4,9 @@ from datetime import datetime
 from run import run
 import ray
 from ray import tune, air, train
-from ray.tune.trainable import session
+# from ray.tune.trainable import session
 from ray.tune.search.ax import AxSearch
-from ray.tune.search import Repeater
+# from ray.tune.search import Repeater
 import torch
 num_gpus = torch.cuda.device_count()
 ray.init(num_cpus=num_gpus, num_gpus=num_gpus)
