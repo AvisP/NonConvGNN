@@ -1,5 +1,8 @@
-from sched import scheduler
-from turtle import mode, pos
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+# from sched import scheduler
+# from turtle import mode, pos
 import torch
 import numpy as np
 from dgl.data import GINDataset
