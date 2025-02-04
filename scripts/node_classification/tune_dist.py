@@ -3,7 +3,7 @@ from datetime import datetime
 from run import run
 import ray
 from ray import tune, air, train
-from ray.tune.trainable import session
+# from ray.tune.trainable import session
 from ray.tune.search.hyperopt import HyperOptSearch
 import torch
 import os
