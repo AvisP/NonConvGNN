@@ -18,7 +18,7 @@ def objective(config):
     config["checkpoint"] = checkpoint
     args = SimpleNamespace(**config)
     acc_vl, acc_te = run(args)
-    ray.train.report(dict(acc_vl=acc_vl, acc_te=acc_te))
+    train.report(dict(acc_vl=acc_vl, acc_te=acc_te))
 
 def experiment(args):
     name = datetime.now().strftime("%m%d%Y%H%M%S") + "_" + args.data

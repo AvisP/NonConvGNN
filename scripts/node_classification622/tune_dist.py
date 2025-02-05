@@ -3,16 +3,15 @@ from datetime import datetime
 from run import run
 import ray
 from ray import tune, air, train
-from ray.tune.trainable import session
 from ray.tune.search.hyperopt import HyperOptSearch
-import torch
 import os
+import importlib
 ray.init(num_cpus=os.cpu_count())
 LSF_COMMAND = "bsub -q gpuqueue -gpu " +\
 "\"num=1:j_exclusive=yes\" -R \"rusage[mem=5] span[ptile=1]\" -W 0:10 -Is "
 
 PYTHON_COMMAND =\
-"python /data/chodera/wangyq/rum/scripts/node_classification/run.py"
+"python3 scripts/node_classification622/run.py"
 
 
 def args_to_command(args):
@@ -46,12 +45,22 @@ def objective(args):
     command = args_to_command(args)
     output = lsf_submit(command)
     accuracy, accuracy_te = parse_output(output)
-    session.report({"accuracy": accuracy, "accuracy_te": accuracy_te})
+    train.report({"accuracy": accuracy, "accuracy_te": accuracy_te})
 
 def experiment(args):
     name = datetime.now().strftime("%m%d%Y%H%M%S")
+
+    # Dynamically import the dgl.data module
+    dgl_data = importlib.import_module('dgl.data')
+
+    # Use getattr to get the class by name from the module
+    dataset_class = getattr(dgl_data, args.data)
+
+    # Instantiate the dataset class
+    data = dataset_class()
+
     param_space = {
-        "data": args.data,
+        "data": data.save_path,
         "hidden_features": tune.randint(8, 32),
         "learning_rate": tune.loguniform(1e-4, 1e-1),
         "weight_decay": tune.loguniform(1e-6, 1e-3),
@@ -70,7 +79,7 @@ def experiment(args):
     }
 
     tune_config = tune.TuneConfig(
-        metric="_metric/accuracy",
+        metric="accuracy",
         mode="max",
         search_alg=HyperOptSearch(),
         num_samples=1000,
@@ -78,7 +87,7 @@ def experiment(args):
 
     run_config = air.RunConfig(
         name=name,
-        storage_path=args.data,
+        storage_path=data.save_path,
         verbose=1,
     )
 

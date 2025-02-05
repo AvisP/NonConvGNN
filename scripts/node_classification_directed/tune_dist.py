@@ -11,7 +11,7 @@ LSF_COMMAND = "bsub -q gpuqueue -gpu " +\
 "\"num=1:j_exclusive=yes\" -R \"rusage[mem=5] span[ptile=1]\" -W 0:10 -Is "
 
 PYTHON_COMMAND =\
-"python3 node_classification/run.py"
+"python3 node_classification_directed/run.py"
 
 
 def args_to_command(args):
