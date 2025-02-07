@@ -1,6 +1,7 @@
 ax-platform==0.3.6 # Cannot install latest because of https://github.com/ray-project/ray/pull/45902
 dgl -f https://data.dgl.ai/wheels/torch-2.4/cu124/repo.html # Select based on cuda and torch verion
+dgllife
 optuna
 sklearn
 ray[train]
-
+rdkit

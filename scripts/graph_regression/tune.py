@@ -4,7 +4,6 @@ from datetime import datetime
 from run import run
 import ray
 from ray import tune, air, train
-from ray.tune.trainable import session
 from ray.tune.search.ax import AxSearch
 from ray.tune.search import Repeater
 import torch
@@ -18,7 +17,7 @@ def objective(config):
     config["checkpoint"] = checkpoint
     args = SimpleNamespace(**config)
     rmse_vl, rmse_te = run(args)
-    ray.train.report(dict(rmse_vl=rmse_vl, rmse_te=rmse_te))
+    train.report(dict(rmse_vl=rmse_vl, rmse_te=rmse_te))
 
 def experiment(args):
     name = datetime.now().strftime("%m%d%Y%H%M%S") + "_" + args.data

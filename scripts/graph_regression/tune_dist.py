@@ -3,16 +3,16 @@ from datetime import datetime
 from run import run
 import ray
 from ray import tune, air, train
-from ray.tune.trainable import session
 from ray.tune.search.hyperopt import HyperOptSearch
-import torch
 import os
+import importlib
+from dgl.data.utils import get_download_dir
 ray.init(num_cpus=os.cpu_count())
 LSF_COMMAND = "bsub -q gpuqueue -gpu " +\
 "\"num=1:j_exclusive=yes\" -R \"rusage[mem=5] span[ptile=1]\" -W 0:10 -Is "
 
 PYTHON_COMMAND =\
-"python /data/chodera/wangyq/rum/scripts/node_classification/run.py"
+"python scripts/graph_regression/run.py"
 
 
 def args_to_command(args):
@@ -46,12 +46,22 @@ def objective(args):
     command = args_to_command(args)
     output = lsf_submit(command)
     accuracy, accuracy_te = parse_output(output)
-    session.report({"accuracy": accuracy, "accuracy_te": accuracy_te})
+    train.report({"accuracy": accuracy, "accuracy_te": accuracy_te})
 
 def experiment(args):
     name = datetime.now().strftime("%m%d%Y%H%M%S")
+
+    # Dynamically import the dgl.data module
+    dgl_data = importlib.import_module('dgllife.data')
+
+    # Use getattr to get the class by name from the module
+    dataset_class = getattr(dgl_data, args.data)
+
+    # Instantiate the dataset class
+    dataset = dataset_class()
+
     param_space = {
-        "data": args.data,
+        "data": os.path.join(str(get_download_dir()), str(args.data)),
         "hidden_features": tune.randint(8, 32),
         "learning_rate": tune.loguniform(1e-4, 1e-1),
         "weight_decay": tune.loguniform(1e-6, 1e-3),
@@ -78,7 +88,7 @@ def experiment(args):
 
     run_config = air.RunConfig(
         name=name,
-        storage_path=args.data,
+        storage_path=os.path.join(str(get_download_dir()), str(args.data)),
         verbose=1,
     )
 
@@ -94,6 +104,6 @@ def experiment(args):
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data", type=str, default="CoraGraphDataset")
+    parser.add_argument("--data", type=str, default="ESOL")
     args = parser.parse_args()
     experiment(args)
