@@ -1,7 +1,9 @@
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 import numpy as np
 import torch
 import dgl
-# from ogb.nodeproppred import DglNodePropPredDataset
 dgl.use_libxsmm(False)
 
 def get_graphs(data, batch_size):
@@ -112,20 +114,20 @@ def run(args):
                 y = y.to("cuda")
             optimizer.zero_grad()
             h, loss = model(g, g.ndata["h0"], e=g.edata["e0"])
-            h = h.mean(0)
+            # h = h.mean(0)
             loss = loss + torch.nn.functional.mse_loss(h, y)
             loss.backward()
             optimizer.step()
 
             with torch.no_grad():
                 h_vl, _ = model(g_vl, g_vl.ndata["h0"], e=g_vl.edata["e0"])
-                h_vl = h_vl.mean(0)
+                # h_vl = h_vl.mean(0)
                 rmse_vl = torch.sqrt(torch.nn.functional.mse_loss(h_vl, y_vl)).item()
                 if early_stopping([rmse_vl]):
                     break
 
                 h_te, _ = model(g_te, g_te.ndata["h0"], e=g_te.edata["e0"])
-                h_te = h_te.mean(0)
+                # h_te = h_te.mean(0)
                 rmse_te = torch.sqrt(torch.nn.functional.mse_loss(h_te, y_te)).item()
 
                 # print(rmse_vl, rmse_te)
