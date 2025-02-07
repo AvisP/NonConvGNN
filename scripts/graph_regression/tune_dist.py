@@ -80,7 +80,7 @@ def experiment(args):
     }
 
     tune_config = tune.TuneConfig(
-        metric="_metric/accuracy",
+        metric="accuracy",
         mode="max",
         search_alg=HyperOptSearch(),
         num_samples=1000,
