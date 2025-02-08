@@ -88,7 +88,7 @@ def experiment(args):
 
     run_config = air.RunConfig(
         name=name,
-        storage_path=os.path.join(str(get_download_dir()), str(args.data)),
+        storage_path=os.path.join(os.getcwd(), str(args.data)),
         verbose=1,
     )
 

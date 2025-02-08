@@ -57,10 +57,10 @@ def experiment(args):
     dataset_class = getattr(dgl_data, args.data)
 
     # Instantiate the dataset class
-    data = dataset_class()
+    dataset = dataset_class()
     
     param_space = {
-        "data": data.save_path,
+        "data": dataset.save_path,
         "hidden_features": tune.randint(8, 32),
         "learning_rate": tune.loguniform(1e-4, 1e-1),
         "weight_decay": tune.loguniform(1e-6, 1e-3),
@@ -85,9 +85,11 @@ def experiment(args):
         num_samples=1000,
     )
 
+    storage_path = os.path.join(os.getcwd(), args.data)
+    
     run_config = air.RunConfig(
         name=name,
-        storage_path=data.save_path,
+        storage_path=storage_path,
         verbose=1,
     )
 
