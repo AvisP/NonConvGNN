@@ -10,7 +10,14 @@ from ray.tune.schedulers import ASHAScheduler
 from ray.tune.search import Repeater
 import torch
 num_gpus = torch.cuda.device_count()
-ray.init(num_cpus=num_gpus, num_gpus=num_gpus)
+if num_gpus > 0:
+    ray.init(num_cpus=num_gpus, num_gpus=num_gpus)
+    resource = {"cpu": num_gpus, "gpu": num_gpus}
+else:
+    import multiprocessing
+    num_cpus = multiprocessing.count_cpus()
+    ray.init(num_cpus=num_cpus)
+    resource = {"cpu": num_cpus}
 
 print(num_gpus)
 
@@ -68,7 +75,7 @@ def experiment(args):
     )
 
     tuner = tune.Tuner(
-        tune.with_resources(objective, {"cpu": 1, "gpu": num_gpus}),
+        tune.with_resources(objective, resource),
         param_space=param_space,
         tune_config=tune_config,
         run_config=run_config,

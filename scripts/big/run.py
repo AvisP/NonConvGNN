@@ -1,3 +1,6 @@
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 from math import degrees
 from re import sub
 import torch
@@ -118,7 +121,7 @@ def run(args):
 
 if __name__ == "__main__":
     import argparse
-    parser = argparse.ArgumentParser(description='OGBN Node Property Prediction')
+    parser = argparse.ArgumentParser(description='Node Classification')
     parser.add_argument('--dataset', type=str, default='FlickrDataset')
     parser.add_argument('--hidden_features', type=int, default=32)
     parser.add_argument('--depth', type=int, default=1)
