@@ -9,16 +9,23 @@ from ray.tune.search.ax import AxSearch
 # from ray.tune.search import Repeater
 import torch
 num_gpus = torch.cuda.device_count()
-ray.init(num_cpus=num_gpus, num_gpus=num_gpus)
 
-print(num_gpus)
+if num_gpus > 0:
+    num_cpus = os.cpu_count()
+    ray.init(num_cpus=num_cpus, num_gpus=num_gpus)
+    resource = {"cpu": num_gpus, "gpu": num_gpus}
+else:
+    num_cpus = os.cpu_count()
+    ray.init(num_cpus=num_cpus)
+    resource = {"cpu": num_cpus}
 
 def objective(config):
     checkpoint = os.path.join(os.getcwd(), "model.pt")
     config["checkpoint"] = checkpoint
     args = SimpleNamespace(**config)
     acc, acc_std = run(args)
-    ray.train.report(dict(acc=acc, acc_std=acc_std))
+    # train.report(dict(acc=acc, acc_std=acc_std))
+    train.report({"acc": acc, "acc_std": acc_std})
 
 def experiment(args):
     name = datetime.now().strftime("%m%d%Y%H%M%S") + "_" + args.data
@@ -63,12 +70,17 @@ def experiment(args):
         verbose=0,
     )
 
-    tuner = tune.Tuner(
-        tune.with_resources(objective, {"cpu": 1, "gpu": 1}),
-        param_space=param_space,
-        tune_config=tune_config,
-        run_config=run_config,
-    )
+    if not args.restore_path:
+        tuner = tune.Tuner(
+            tune.with_resources(objective, {"cpu": 1, "gpu": 1}),
+            param_space=param_space,
+            tune_config=tune_config,
+            run_config=run_config,
+        )
+    else:
+        tuner = tune.Tuner.restore(path=args.restore_path,
+                               trainable=objective,
+                               param_space=param_space)
 
     results = tuner.fit()
 
@@ -77,5 +89,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--data", type=str, default="MUTAG")
     parser.add_argument("--split_index", type=int, default=-1)
+    parser.add_argument("--restore_path", type=str, default=None)
     args = parser.parse_args()
     experiment(args)
