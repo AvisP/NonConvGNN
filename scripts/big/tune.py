@@ -84,12 +84,17 @@ def experiment(args):
         verbose=1,
     )
 
-    tuner = tune.Tuner(
-        objective,
-        param_space=param_space,
-        tune_config=tune_config,
-        run_config=run_config,
-    )
+    if not args.restore_path:
+        tuner = tune.Tuner(
+            objective,
+            param_space=param_space,
+            tune_config=tune_config,
+            run_config=run_config,
+        )
+    else:
+        tuner = tune.Tuner.restore(args.restore_path,
+                                   trainable=objective,
+                                   param_space=param_space)
 
     results = tuner.fit()
 
@@ -99,5 +104,6 @@ if __name__ == "__main__":
     parser.add_argument("--dataset", type=str, default="RedditDataset")
     parser.add_argument("--directed", type=int, default=0)
     parser.add_argument("--split_index", type=int, default=-1)
+    parser.add_arguments("--restore_path", type=str, default=None) #'/home/user_name/NonConvGNN/Dataset/folder_name/
     args = parser.parse_args()
     experiment(args)
