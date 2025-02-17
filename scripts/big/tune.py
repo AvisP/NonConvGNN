@@ -9,13 +9,14 @@ from ray.tune.schedulers import ASHAScheduler
 import torch
 num_gpus = torch.cuda.device_count()
 LSF_COMMAND = "bsub -q gpuqueue -gpu " +\
-"\"num=1:j_exclusive=yes\" -R \"rusage[mem=5] span[ptile=1]\" -W 0:10 -Is "
+"\"num=1:j_exclusive=yes\" -R \"rusage[mem=40] span[ptile=1]\" -W 0:10 -Is "
 
 PYTHON_COMMAND =\
 "python3 scripts/big/run.py"
 
 if num_gpus > 0:
-    ray.init(num_cpus=num_gpus, num_gpus=num_gpus)
+    num_cpus = os.cpu_count()
+    ray.init(num_cpus=6, num_gpus=num_gpus)
     resource = {"cpu": num_gpus, "gpu": num_gpus}
 else:
     num_cpus = os.cpu_count()
@@ -73,7 +74,7 @@ def experiment(args):
         search_alg=OptunaSearch(),
         num_samples=1000,
         mode='max',
-        metric='accuracy',
+        metric='acc_vl',
     )
 
     storage_path = os.path.join(os.getcwd(), args.dataset)
@@ -104,6 +105,6 @@ if __name__ == "__main__":
     parser.add_argument("--dataset", type=str, default="RedditDataset")
     parser.add_argument("--directed", type=int, default=0)
     parser.add_argument("--split_index", type=int, default=-1)
-    parser.add_arguments("--restore_path", type=str, default=None) #'/home/user_name/NonConvGNN/Dataset/folder_name/
+    parser.add_argument("--restore_path", type=str, default=None) #'/home/user_name/NonConvGNN/Dataset/folder_name/
     args = parser.parse_args()
     experiment(args)
