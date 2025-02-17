@@ -6,26 +6,36 @@ import ray
 from ray import tune, air, train
 from ray.tune.search.optuna import OptunaSearch
 from ray.tune.schedulers import ASHAScheduler
-
-from ray.tune.search import Repeater
 import torch
 num_gpus = torch.cuda.device_count()
+LSF_COMMAND = "bsub -q gpuqueue -gpu " +\
+"\"num=1:j_exclusive=yes\" -R \"rusage[mem=5] span[ptile=1]\" -W 0:10 -Is "
+
+PYTHON_COMMAND =\
+"python3 scripts/big/run.py"
+
 if num_gpus > 0:
     ray.init(num_cpus=num_gpus, num_gpus=num_gpus)
     resource = {"cpu": num_gpus, "gpu": num_gpus}
 else:
-    import multiprocessing
-    num_cpus = multiprocessing.count_cpus()
+    num_cpus = os.cpu_count()
     ray.init(num_cpus=num_cpus)
     resource = {"cpu": num_cpus}
 
-print(num_gpus)
+def args_to_command(args):
+    command = LSF_COMMAND + "\""
+    command += PYTHON_COMMAND
+    for key, value in args.items():
+        command += f" --{key} {value}"
+    command += "\""
+    return command
 
 def objective(config):
     checkpoint = os.path.join(os.getcwd(), "model.pt")
     config["checkpoint"] = checkpoint
     args = SimpleNamespace(**config)
-    run(args)
+    acc_vl, acc_te = run(args)
+    train.report({"accuracy": acc_vl, "accuracy_te": acc_te})
 
 def experiment(args):
     name = datetime.now().strftime("%m%d%Y%H%M%S") + "_" + args.dataset
@@ -63,7 +73,7 @@ def experiment(args):
         search_alg=OptunaSearch(),
         num_samples=1000,
         mode='max',
-        metric='acc_vl',
+        metric='accuracy',
     )
 
     storage_path = os.path.join(os.getcwd(), args.dataset)
@@ -75,7 +85,7 @@ def experiment(args):
     )
 
     tuner = tune.Tuner(
-        tune.with_resources(objective, resource),
+        objective,
         param_space=param_space,
         tune_config=tune_config,
         run_config=run_config,

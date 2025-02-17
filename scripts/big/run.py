@@ -4,9 +4,6 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')
 from math import degrees
 from re import sub
 import torch
-from ogb import nodeproppred
-import ray
-from ray import train
 import dgl
 
 def run(args):
@@ -107,8 +104,8 @@ def run(args):
                     f"Test Acc: {acc_te:.4f}"
                 )
 
-            else:
-                ray.train.report(dict(acc_vl=acc_vl, acc_te=acc_te))
+            # else:
+            #     ray.train.report(dict(acc_vl=acc_vl, acc_te=acc_te))
 
             if acc_vl > acc_vl_max:
                 acc_vl_max = acc_vl
@@ -116,7 +113,8 @@ def run(args):
                 
             if early_stopping([-acc_vl]):
                 break
-    
+
+    print(acc_vl_max, acc_te_max, flush=True)
     return acc_vl_max, acc_te_max
 
 if __name__ == "__main__":
