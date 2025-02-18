@@ -8,6 +8,7 @@ from ray.tune.search.optuna import OptunaSearch
 from ray.tune.schedulers import ASHAScheduler
 import torch
 num_gpus = torch.cuda.device_count()
+num_cpus = os.cpu_count()
 LSF_COMMAND = "bsub -q gpuqueue -gpu " +\
 "\"num=1:j_exclusive=yes\" -R \"rusage[mem=40] span[ptile=1]\" -W 0:10 -Is "
 
@@ -15,11 +16,9 @@ PYTHON_COMMAND =\
 "python3 scripts/big/run.py"
 
 if num_gpus > 0:
-    num_cpus = os.cpu_count()
-    ray.init(num_cpus=6, num_gpus=num_gpus)
+    ray.init(num_cpus=8, num_gpus=num_gpus)
     resource = {"cpu": num_gpus, "gpu": num_gpus}
 else:
-    num_cpus = os.cpu_count()
     ray.init(num_cpus=num_cpus)
     resource = {"cpu": num_cpus}
 
@@ -36,7 +35,7 @@ def objective(config):
     config["checkpoint"] = checkpoint
     args = SimpleNamespace(**config)
     acc_vl, acc_te = run(args)
-    train.report({"accuracy": acc_vl, "accuracy_te": acc_te})
+    train.report({"acc_vl": acc_vl, "acc_te": acc_te})
 
 def experiment(args):
     name = datetime.now().strftime("%m%d%Y%H%M%S") + "_" + args.dataset
@@ -87,14 +86,14 @@ def experiment(args):
 
     if not args.restore_path:
         tuner = tune.Tuner(
-            objective,
+            tune.with_resources(objective, {"cpu": args.use_cpu_per_trial, "gpu": args.use_gpu_per_trial}),
             param_space=param_space,
             tune_config=tune_config,
             run_config=run_config,
         )
     else:
         tuner = tune.Tuner.restore(args.restore_path,
-                                   trainable=objective,
+                                   trainable=tune.with_resources(objective, {"cpu": args.use_cpu_per_trial, "gpu": args.use_gpu_per_trial}),
                                    param_space=param_space)
 
     results = tuner.fit()
@@ -106,5 +105,11 @@ if __name__ == "__main__":
     parser.add_argument("--directed", type=int, default=0)
     parser.add_argument("--split_index", type=int, default=-1)
     parser.add_argument("--restore_path", type=str, default=None) #'/home/user_name/NonConvGNN/Dataset/folder_name/
+    parser.add_argument("--use_cpu_per_trial", type=int, default=1)
+    parser.add_argument("--use_gpu_per_trial", type=int, default=0)
     args = parser.parse_args()
+    if num_cpus < args.use_cpu_per_trial:
+        print(f"WARNING : Ray intialized with {num_cpus} cpus Cannot allocate {args.use_cpu_per_trial} cpus. Training will FAIL even if it starts!!")
+    if num_gpus < args.use_gpu_per_trial:
+        print(f"WARNING : Ray intialized with {num_gpus} gpus Cannot allocate {args.use_gpu_per_trial} gpus. Training will FAIL even it starts!!")
     experiment(args)
