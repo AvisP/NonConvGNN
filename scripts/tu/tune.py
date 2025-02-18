@@ -13,7 +13,7 @@ num_gpus = torch.cuda.device_count()
 if num_gpus > 0:
     num_cpus = os.cpu_count()
     ray.init(num_cpus=num_cpus, num_gpus=num_gpus)
-    resource = {"cpu": num_gpus, "gpu": num_gpus}
+    resource = {"cpu": 6, "gpu": num_gpus}
 else:
     num_cpus = os.cpu_count()
     ray.init(num_cpus=num_cpus)

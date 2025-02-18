@@ -72,7 +72,7 @@ def experiment(args):
 
     if not args.restore_path:
         tuner = tune.Tuner(
-            tune.with_resources(objective, {"cpu": 1, "gpu": 1}),
+            tune.with_resources(objective, resource),
             param_space=param_space,
             tune_config=tune_config,
             run_config=run_config,
