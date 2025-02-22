@@ -37,9 +37,9 @@ def experiment(args):
         "consistency_temperature": tune.uniform(0.0, 1.0),
         "optimizer": "Adam",
         "depth": 1,
-        "num_layers": 1, # tune.randint(1, 3),
+        "num_layers": tune.randint(1, 3),
         "num_samples": 8,
-        "n_epochs": 2000,  
+        "n_epochs": 500,  
         "patience": 500,
         "self_supervise_weight": tune.loguniform(1e-4, 1.0),
         "consistency_weight": tune.loguniform(1e-4, 1.0),
@@ -54,7 +54,7 @@ def experiment(args):
         metric="acc_vl",
         mode="max",
         search_alg=Repeater(OptunaSearch(), 3),
-        num_samples=100,
+        num_samples=1000,
     )
 
     if args.split_index < 0:
