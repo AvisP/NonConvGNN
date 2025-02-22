@@ -88,6 +88,7 @@ if __name__ == "__main__":
     parser.add_argument("--data", type=str, default="AmazonCoBuyComputerDataset")
     parser.add_argument("--directed", type=int, default=0)
     parser.add_argument("--split_index", type=int, default=-1)
+    parser.add_argument("--restore_path", type=str, default=None)
     parser.add_argument("--use_cpu_per_trial", type=int, default=1)
     parser.add_argument("--use_gpu_per_trial", type=int, default=0)
     args = parser.parse_args()
