@@ -126,7 +126,7 @@ def run(args):
     for idx in range(args.n_epochs):
         optimizer.zero_grad()
         h, loss = model(g, g.ndata["feat"], e=e)
-        h = h.mean(0).log()
+        h = h.mean(0).log() # This mean is different it's over the 3rd dimension
         loss = loss + torch.nn.NLLLoss()(
             h[g.ndata["train_mask"]], 
             g.ndata["label"][g.ndata["train_mask"]],
@@ -137,7 +137,7 @@ def run(args):
 
         with torch.no_grad():
             h, _ = model(g, g.ndata["feat"], e=e)
-            h = h.mean(0)
+            h = h.mean(0) # This mean is different it's over the 3rd dimension
             acc_tr = (
                 h.argmax(-1)[g.ndata["train_mask"]] == g.ndata["label"][g.ndata["train_mask"]]
             ).float().mean().item()
@@ -184,7 +184,7 @@ if __name__ == "__main__":
     parser.add_argument("--optimizer", type=str, default="Adam")
     parser.add_argument("--learning_rate", type=float, default=1e-2)
     parser.add_argument("--weight_decay", type=float, default=1e-10)
-    parser.add_argument("--n_epochs", type=int, default=10000)
+    parser.add_argument("--n_epochs", type=int, default=1000)
     # parser.add_argument("--factor", type=float, default=0.5)
     # parser.add_argument("--patience", type=int, default=10)
     parser.add_argument("--temperature", type=float, default=0.2)
