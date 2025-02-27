@@ -1,8 +1,6 @@
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
-import copy
-import numpy as np
 import torch
 import dgl
 # from ogb.nodeproppred import DglNodePropPredDataset
@@ -69,9 +67,9 @@ def run(args):
         edge_features=e.shape[-1] if e is not None else 0,
     )
 
-    print(model)
-    number_of_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    print("Number of parameters:", number_of_parameters, flush=True)
+    # print(model)
+    # number_of_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    # print("Number of parameters:", number_of_parameters, flush=True)
 
     if torch.cuda.is_available():
         model = model.cuda()

@@ -13,7 +13,7 @@ num_gpus = torch.cuda.device_count()
 
 if num_gpus > 0:
     ray.init(num_cpus=num_cpus, num_gpus=num_gpus)
-    resource = {"cpu": 6, "gpu": num_gpus}
+    resource = {"cpu": num_cpus, "gpu": num_gpus}
 else:
     ray.init(num_cpus=num_cpus)
     resource = {"cpu": num_cpus}
@@ -39,7 +39,7 @@ def experiment(args):
         "consistency_temperature": tune.uniform(0.0, 1.0),
         "optimizer": "Adam",
         "depth": 1,
-        "num_layers": 1, # tune.randint(1, 3),
+        "num_layers": tune.randint(1, 3),
         "num_samples": 8,
         "n_epochs": 1000,  
         "patience": 500,
