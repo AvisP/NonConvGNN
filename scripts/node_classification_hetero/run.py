@@ -137,8 +137,8 @@ def run(args):
                     f"Val Acc: {acc_vl:.4f}, "
                     f"Test Acc: {acc_te:.4f}"
                 )
-            else:
-                train.report(dict(acc_tr=acc_tr, acc_vl=acc_vl, acc_te=acc_te))
+            # else:  # Add if you want all the values
+            #     train.report(dict(acc_tr=acc_tr, acc_vl=acc_vl, acc_te=acc_te))
 
             # scheduler.step(acc_vl)
 
