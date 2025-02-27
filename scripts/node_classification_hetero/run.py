@@ -111,8 +111,8 @@ def run(args):
         h, loss = model(g, g.ndata["feat"], e=e)
         h = h.mean(0).log()
         loss = loss + torch.nn.NLLLoss()(
-            h[g.ndata["train_mask"]], 
-            g.ndata["label"][g.ndata["train_mask"]],
+            h[g.ndata["train_mask"][:,0]],  # Taking only the first row
+            g.ndata["label"][g.ndata["train_mask"][:,0]], # Taking only the first row
         ) 
         loss.backward()
         optimizer.step()
@@ -122,13 +122,13 @@ def run(args):
             h, _ = model(g, g.ndata["feat"], e=e)
             h = h.mean(0)
             acc_tr = (
-                h.argmax(-1)[g.ndata["train_mask"]] == g.ndata["label"][g.ndata["train_mask"]]
+                h.argmax(-1)[g.ndata["train_mask"][:,0]] == g.ndata["label"][g.ndata["train_mask"][:,0]]
             ).float().mean().item()
             acc_vl = (
-                h.argmax(-1)[g.ndata["val_mask"]] == g.ndata["label"][g.ndata["val_mask"]]
+                h.argmax(-1)[g.ndata["val_mask"][:,0]] == g.ndata["label"][g.ndata["val_mask"][:,0]]
             ).float().mean().item()
             acc_te = (
-                h.argmax(-1)[g.ndata["test_mask"]] == g.ndata["label"][g.ndata["test_mask"]]
+                h.argmax(-1)[g.ndata["test_mask"][:,0]] == g.ndata["label"][g.ndata["test_mask"][:,0]]
             ).float().mean().item()
 
             if __name__ == "__main__":
@@ -161,7 +161,7 @@ def run(args):
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data", type=str, default="CoraGraphDataset")
+    parser.add_argument("--data", type=str, default="WisconsinDataset")
     parser.add_argument("--hidden_features", type=int, default=32)
     parser.add_argument("--depth", type=int, default=1)
     parser.add_argument("--num_samples", type=int, default=4)
