@@ -129,14 +129,14 @@ def run(args):
                 h.argmax(-1)[g.ndata["test_mask"][:,0]] == g.ndata["label"][g.ndata["test_mask"][:,0]]
             ).float().mean().item()
 
-            if __name__ == "__main__":
-                print(
-                    f"Epoch: {idx+1:03d}, "
-                    f"Loss: {loss.item():.4f}, "
-                    f"Train Acc: {acc_tr:.4f}, "
-                    f"Val Acc: {acc_vl:.4f}, "
-                    f"Test Acc: {acc_te:.4f}"
-                )
+            # if __name__ == "__main__":
+            #     print(
+            #         f"Epoch: {idx+1:03d}, "
+            #         f"Loss: {loss.item():.4f}, "
+            #         f"Train Acc: {acc_tr:.4f}, "
+            #         f"Val Acc: {acc_vl:.4f}, "
+            #         f"Test Acc: {acc_te:.4f}"
+            #     )
             # else:  # Add if you want all the values
             #     train.report(dict(acc_tr=acc_tr, acc_vl=acc_vl, acc_te=acc_te))
 
