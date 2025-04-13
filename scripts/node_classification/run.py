@@ -105,20 +105,6 @@ def run(args):
         weight_decay=args.weight_decay,
     )
 
-
-    # for _ in range(1000):
-    #     optimizer.zero_grad()
-    #     _, loss = model(g, g.ndata["feat"], consistency_weight=0.0)
-    #     loss.backward()
-    #     optimizer.step()
-
-    # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-    #     optimizer, 
-    #     mode="max",
-    #     factor=args.factor,
-    #     patience=args.patience,
-    # )
-
     from rum.utils import EarlyStopping
     early_stopping = EarlyStopping(patience=args.patience)
 
@@ -148,14 +134,14 @@ def run(args):
                 h.argmax(-1)[g.ndata["test_mask"]] == g.ndata["label"][g.ndata["test_mask"]]
             ).float().mean().item()
 
-            if __name__ == "__main__":
-                print(
-                    f"Epoch: {idx+1:03d}, "
-                    f"Loss: {loss.item():.4f}, "
-                    f"Train Acc: {acc_tr:.4f}, "
-                    f"Val Acc: {acc_vl:.4f}, "
-                    f"Test Acc: {acc_te:.4f}"
-                )
+            # if __name__ == "__main__":
+            #     print(
+            #         f"Epoch: {idx+1:03d}, "
+            #         f"Loss: {loss.item():.4f}, "
+            #         f"Train Acc: {acc_tr:.4f}, "
+            #         f"Val Acc: {acc_vl:.4f}, "
+            #         f"Test Acc: {acc_te:.4f}"
+            #     )
 
             # scheduler.step(acc_vl)
 
