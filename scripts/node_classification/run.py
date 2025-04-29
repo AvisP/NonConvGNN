@@ -7,6 +7,26 @@ import torch
 import dgl
 # from ogb.nodeproppred import DglNodePropPredDataset
 dgl.use_libxsmm(False)
+# import dgl.nn as dglnn
+# import torch.nn as nn
+# import torch.nn.functional as F
+import json
+import subprocess
+import random
+os.environ['CUBLAS_WORKSPACE_CONFIG'] = ':4096:8'  # Or use ':16:8' depending on your preference
+
+def set_seeds(seed):
+    os.environ['PYTHONHASHSEED'] = str(seed)
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    dgl.seed(seed)
+    dgl.random.seed(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    torch.use_deterministic_algorithms(True)
 
 def get_graph(data):
     from dgl.data import (
@@ -54,6 +74,8 @@ def get_graph(data):
     return g
 
 def run(args):
+    set_seeds(args.seed)
+    print('Seed set at ', args.seed)
     g = get_graph(args.data)
 
     if args.directed:
@@ -184,5 +206,6 @@ if __name__ == "__main__":
     parser.add_argument("--split_index", type=int, default=-1)
     parser.add_argument("--patience", type=int, default=500)
     parser.add_argument("--directed", type=int, default=0)
+    parser.add_argument("--seed", type=int, default=3465)
     args = parser.parse_args()
     run(args)

@@ -5,7 +5,7 @@ from run import run
 import ray
 from ray import tune, air, train
 from ray.tune.search.optuna import OptunaSearch
-from ray.tune.search import Repeater
+# from ray.tune.search import Repeater
 import torch
 num_gpus = torch.cuda.device_count()
 
@@ -48,12 +48,13 @@ def experiment(args):
         "activation": "SiLU", # tune.choice(["ReLU", "ELU", "SiLU"]),
         "split_index": args.split_index,
         "directed": args.directed,
+        "seed": 3615
     }
 
     tune_config = tune.TuneConfig(
         metric="acc_vl",
         mode="max",
-        search_alg=Repeater(OptunaSearch(), 3),
+        search_alg=OptunaSearch(),
         num_samples=1000,
     )
 
