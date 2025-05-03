@@ -19,15 +19,36 @@ else:
     resource = {"cpu": num_cpus}
 
 def objective(config):
-    checkpoint = os.path.join(os.getcwd(), "model.pt")
-    config["checkpoint"] = checkpoint
+    global checkpoint_dir
+
+    trial_dir = tune.get_context().get_trial_dir()
+    
     args = SimpleNamespace(**config)
-    acc_vl, acc_te = run(args)
+    acc_vl, acc_te, model = run(args)
     print('Acc_vl ', acc_vl, 'Acc_te ', acc_te)
-    train.report(dict(acc_vl=acc_vl, acc_te=acc_te))
+
+    if os.listdir(checkpoint_dir):  # Check if the folder contains files
+        for file in os.listdir(checkpoint_dir):
+            file_path = os.path.join(checkpoint_dir, file)
+            if os.path.isfile(file_path):  # Ensure it's a file, not a folder
+                os.remove(file_path)
+                print(f"Removed: {file}")
+        print("All files have been removed!")
+    else:
+        print("Folder is empty.")
+
+    checkpoint_path = os.path.join(checkpoint_dir, f"model_{trial_dir.split('/')[-1].split('_')[1]}.pt")
+    torch.save(model.state_dict(), checkpoint_path)
+    print("SAVED AT ", checkpoint_path)
+    checkpoint = train.Checkpoint.from_directory(checkpoint_dir)
+    tune.report(metrics=dict(acc_vl=acc_vl, acc_te=acc_te), checkpoint=checkpoint)
 
 def experiment(args):
+    global checkpoint_dir
     name = datetime.now().strftime("%m%d%Y%H%M%S") + "_" + args.data
+    checkpoint_dir = os.path.join(os.getcwd(), f"{args.data}", name, 'checkpoints')
+    os.makedirs(checkpoint_dir, exist_ok=True)
+
     param_space = {
         "data": args.data,
         "hidden_features": tune.randint(32, 64),
@@ -55,7 +76,7 @@ def experiment(args):
         metric="acc_vl",
         mode="max",
         search_alg=OptunaSearch(),
-        num_samples=1000,
+        num_samples=4,
     )
 
     if args.split_index < 0:
@@ -63,10 +84,14 @@ def experiment(args):
     else:
         storage_path = os.path.join(os.getcwd(), args.data, str(args.split_index))
     
-    run_config = air.RunConfig(
+    run_config = tune.RunConfig(
         name=name,
         storage_path=storage_path,
         verbose=0,
+        checkpoint_config=tune.CheckpointConfig(
+            num_to_keep=3,  # Keep last 5 checkpoints
+            checkpoint_score_attribute='acc_vl',
+            checkpoint_score_order='max'),     
     )
 
     if not args.restore_path:

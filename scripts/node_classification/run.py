@@ -178,7 +178,7 @@ def run(args):
                 break
     
     print(acc_vl_max, acc_te_max, flush=True)
-    return acc_vl_max, acc_te_max
+    return acc_vl_max, acc_te_max, model
         
 
 if __name__ == "__main__":
