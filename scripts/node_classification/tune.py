@@ -79,7 +79,7 @@ def experiment(args):
         metric="acc_vl_mean",
         mode="max",
         search_alg=OptunaSearch(),
-        num_samples=2,
+        num_samples=1000,
     )
 
     if args.split_index < 0:
