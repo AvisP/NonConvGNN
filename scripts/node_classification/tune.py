@@ -3,6 +3,7 @@ from types import SimpleNamespace
 from datetime import datetime
 from run import run
 import ray
+import numpy as np
 from ray import tune, air, train
 from ray.tune.search.optuna import OptunaSearch
 # from ray.tune.search import Repeater
@@ -24,8 +25,10 @@ def objective(config):
     trial_dir = tune.get_context().get_trial_dir()
     
     args = SimpleNamespace(**config)
-    acc_vl, acc_te, model = run(args)
-    print('Acc_vl ', acc_vl, 'Acc_te ', acc_te)
+    # acc_vl, acc_te, model = run(args)
+
+    acc_vl_mean, acc_vl_std, acc_te_mean, acc_te_std, model =  run(args)
+    print('Acc_vl ', acc_vl_mean, 'Acc_te ', acc_te_mean)
 
     if os.listdir(checkpoint_dir):  # Check if the folder contains files
         for file in os.listdir(checkpoint_dir):
@@ -41,7 +44,7 @@ def objective(config):
     torch.save(model.state_dict(), checkpoint_path)
     print("SAVED AT ", checkpoint_path)
     checkpoint = train.Checkpoint.from_directory(checkpoint_dir)
-    tune.report(metrics=dict(acc_vl=acc_vl, acc_te=acc_te), checkpoint=checkpoint)
+    tune.report(metrics=dict(acc_vl_mean=acc_vl_mean, acc_vl_std=acc_vl_std, acc_te_mean=acc_te_mean, acc_te_std=acc_te_std), checkpoint=checkpoint)
 
 def experiment(args):
     global checkpoint_dir
@@ -73,10 +76,10 @@ def experiment(args):
     }
 
     tune_config = tune.TuneConfig(
-        metric="acc_vl",
+        metric="acc_vl_mean",
         mode="max",
         search_alg=OptunaSearch(),
-        num_samples=4,
+        num_samples=2,
     )
 
     if args.split_index < 0:
@@ -90,7 +93,7 @@ def experiment(args):
         verbose=0,
         checkpoint_config=tune.CheckpointConfig(
             num_to_keep=3,  # Keep last 5 checkpoints
-            checkpoint_score_attribute='acc_vl',
+            checkpoint_score_attribute='acc_vl_mean',
             checkpoint_score_order='max'),     
     )
 

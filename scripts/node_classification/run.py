@@ -111,7 +111,7 @@ def run(args):
         activation=getattr(torch.nn, args.activation)(),
         edge_features=e.shape[-1] if e is not None else 0,
     )
-
+    
     if torch.cuda.is_available():
         model = model.cuda()
         g = g.to("cuda")
@@ -132,6 +132,7 @@ def run(args):
 
     acc_vl_max, acc_te_max = 0, 0
     for idx in range(args.n_epochs):
+        model.train()
         optimizer.zero_grad()
         h, loss = model(g, g.ndata["feat"], e=e)
         h = h.mean(0).log() # This mean is different it's over the 3rd dimension
@@ -141,20 +142,26 @@ def run(args):
         ) 
         loss.backward()
         optimizer.step()
-        
-
+        # print(f"Epoch {idx} Loss {loss}")
+        model.eval()
         with torch.no_grad():
-            h, _ = model(g, g.ndata["feat"], e=e)
-            h = h.mean(0) # This mean is different it's over the 3rd dimension
-            acc_tr = (
-                h.argmax(-1)[g.ndata["train_mask"]] == g.ndata["label"][g.ndata["train_mask"]]
-            ).float().mean().item()
-            acc_vl = (
-                h.argmax(-1)[g.ndata["val_mask"]] == g.ndata["label"][g.ndata["val_mask"]]
-            ).float().mean().item()
-            acc_te = (
-                h.argmax(-1)[g.ndata["test_mask"]] == g.ndata["label"][g.ndata["test_mask"]]
-            ).float().mean().item()
+            results_vl = []
+            results_te = []
+            for i in range(10):
+                h, _ = model(g, g.ndata["feat"], e=e)
+                h = h.mean(0) # This mean is different it's over the 3rd dimension
+                # acc_tr = (
+                #     h.argmax(-1)[g.ndata["train_mask"]] == g.ndata["label"][g.ndata["train_mask"]]
+                # ).float().mean().item()
+                
+                acc_vl = (
+                    h.argmax(-1)[g.ndata["val_mask"]] == g.ndata["label"][g.ndata["val_mask"]]
+                ).float().mean().item()
+                acc_te = (
+                    h.argmax(-1)[g.ndata["test_mask"]] == g.ndata["label"][g.ndata["test_mask"]]
+                ).float().mean().item()
+                results_vl.append(acc_vl)
+                results_te.append(acc_te)
 
             # if __name__ == "__main__":
             #     print(
@@ -169,16 +176,22 @@ def run(args):
 
             # if optimizer.param_groups[0]["lr"] < 1e-6:
             #     break
+            acc_vl_mean = np.array(results_vl).mean()
+            acc_te_mean = np.array(results_te).mean()
 
-            if acc_vl > acc_vl_max:
-                acc_vl_max = acc_vl
-                acc_te_max = acc_te
+            if acc_vl_mean > acc_vl_max:
+                acc_vl_max = acc_vl_mean
+                acc_te_max = acc_te_mean
+                acc_vl_std = np.array(results_vl).std()
+                acc_te_std = np.array(results_te).std()
+                model_cur_best = model
                 
             if early_stopping([-acc_vl]):
                 break
-    
-    print(acc_vl_max, acc_te_max, flush=True)
-    return acc_vl_max, acc_te_max, model
+            # print(f"Epoch {idx} Acc_vl_mean {acc_vl_mean} Acc_vl_std {acc_vl_std} Acc_te_mean {acc_te_mean} Acc_te_std {acc_te_std}", flush = True)
+    print(acc_vl_max, acc_vl_std, acc_te_max, acc_te_std, flush=True)
+
+    return acc_vl_max, acc_vl_std, acc_te_max, acc_te_std, model_cur_best
         
 
 if __name__ == "__main__":
@@ -206,6 +219,6 @@ if __name__ == "__main__":
     parser.add_argument("--split_index", type=int, default=-1)
     parser.add_argument("--patience", type=int, default=500)
     parser.add_argument("--directed", type=int, default=0)
-    parser.add_argument("--seed", type=int, default=3465)
+    parser.add_argument("--seed", type=int, default=5435)
     args = parser.parse_args()
     run(args)
