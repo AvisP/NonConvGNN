@@ -48,8 +48,12 @@ def objective(config):
 
 def experiment(args):
     global checkpoint_dir
-    name = datetime.now().strftime("%m%d%Y%H%M%S") + "_" + args.data
-    checkpoint_dir = os.path.join(os.getcwd(), f"{args.data}", name, 'checkpoints')
+    if not args.restore_path:
+        name = datetime.now().strftime("%m%d%Y%H%M%S") + "_" + args.data
+        checkpoint_dir = os.path.join(os.getcwd(), f"{args.data}", name, 'checkpoints')
+    else:
+        checkpoint_dir = os.path.join(args.restore_path, 'checkpoints')
+        name = args.restore_path.split('/')[-1]
     os.makedirs(checkpoint_dir, exist_ok=True)
 
     param_space = {
