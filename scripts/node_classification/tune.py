@@ -43,7 +43,7 @@ def objective(config):
     checkpoint_path = os.path.join(checkpoint_dir, f"model_{trial_dir.split('/')[-1].split('_')[1]}.pt")
     torch.save(model.state_dict(), checkpoint_path)
     print("SAVED AT ", checkpoint_path)
-    checkpoint = train.Checkpoint.from_directory(checkpoint_dir)
+    checkpoint = tune.Checkpoint.from_directory(checkpoint_dir)
     tune.report(metrics=dict(acc_vl_mean=acc_vl_mean, acc_vl_std=acc_vl_std, acc_te_mean=acc_te_mean, acc_te_std=acc_te_std), checkpoint=checkpoint)
 
 def experiment(args):
@@ -76,7 +76,7 @@ def experiment(args):
         "activation": "SiLU", # tune.choice(["ReLU", "ELU", "SiLU"]),
         "split_index": args.split_index,
         "directed": args.directed,
-        "seed": 3615
+        "seed": args.seed_num
     }
 
     tune_config = tune.TuneConfig(
@@ -124,6 +124,7 @@ if __name__ == "__main__":
     parser.add_argument("--restore_path", type=str, default=None)
     parser.add_argument("--use_cpu_per_trial", type=int, default=1)
     parser.add_argument("--use_gpu_per_trial", type=int, default=0)
+    parser.add_argument("--seed_num", type=int, default=3615)
     args = parser.parse_args()
     if num_cpus < args.use_cpu_per_trial:
         print(f"WARNING : Ray intialized with {num_cpus} cpus Cannot allocate {args.use_cpu_per_trial} cpus. Training will FAIL even if it starts!!")
